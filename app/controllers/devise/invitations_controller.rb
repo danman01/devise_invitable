@@ -3,6 +3,7 @@ class Devise::InvitationsController < DeviseController
   prepend_before_filter :authenticate_inviter!, :only => [:new, :create]
   prepend_before_filter :has_invitations_left?, :only => [:create]
   prepend_before_filter :require_no_authentication, :only => [:edit, :update, :destroy]
+  prepend_before_filter :get_invitation_token, :only =>[:edit, :destroy]
   prepend_before_filter :resource_from_invitation_token, :only => [:edit, :destroy]
   helper_method :after_sign_in_path_for
 
@@ -70,10 +71,16 @@ class Devise::InvitationsController < DeviseController
   end
   
   def resource_from_invitation_token
-    unless params[:invitation_token] && @invitee = resource_class.find_by(invitation_token: params[:invitation_token])
+    puts "invitation token: #{@token}"
+    unless @token && @invitee = resource_class.find_by(invitation_token: @token)
       set_flash_message(:alert, :invitation_token_invalid)
       redirect_to after_sign_out_path_for(resource_name)
     end
+  end
+
+  def get_invitation_token
+    @token = params[:invitation_token]
+    puts "Token: #{@token}"
   end
 
   def invite_params
